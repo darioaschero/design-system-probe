@@ -1,29 +1,30 @@
 {
-  "name": "nuri-vault-spike",
-  "version": "1.0.0",
+  "name": "design-system-check",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Nuri DS integration probe — deliberately mirrors nuri-expo's stack (Expo 53 · RN 0.79.6 · React 19.0 · TS 5.8) to validate that a vendored @nuri/rn tag compiles, bundles, and renders there. Not a demo app.",
   "main": "index.ts",
   "dependencies": {
-    "@expo-google-fonts/roboto": "^0.4.3",
-    "@expo/metro-runtime": "~56.0.13",
-    "expo": "~56.0.8",
-    "expo-font": "~56.0.5",
-    "expo-status-bar": "~56.0.4",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-native": "0.85.3",
-    "react-native-safe-area-context": "~5.7.0",
-    "react-native-svg": "15.15.4",
-    "react-native-web": "^0.21.2"
+    "@expo/metro-runtime": "~5.0.5",
+    "expo": "~53.0.27",
+    "expo-status-bar": "~2.2.3",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.6",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-svg": "^15.12.1",
+    "react-native-web": "^0.20.0"
   },
   "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "@types/react": "~19.0.10",
+    "typescript": "~5.8.3"
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
-  },
-  "private": true
+    "android": "expo start --android",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "ds:pull": "node tools/ds-pull.mjs"
+  }
 }

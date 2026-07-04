@@ -1,20 +1,9 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true,
-    "jsx": "react-native",
-    "moduleResolution": "bundler",
-    "isolatedModules": true,
-    "skipLibCheck": true
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "vendor/nuri-design-system/build/**/*.ts",
-    "vendor/nuri-design-system/docs/migration-tests/button-matrix/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "vendor/nuri-design-system/docs/migration-tests/button-matrix/react-native-svg.d.ts"
-  ]
+  "exclude": ["node_modules", "dist", ".expo"]
 }
