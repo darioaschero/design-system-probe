@@ -4,10 +4,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": true,
-    "baseUrl": ".",
     "paths": {
       "@ds": [
-        "ds/nuri/index.ts"
+        "./ds/nuri/index.ts"
       ]
     }
   },

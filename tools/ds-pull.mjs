@@ -22,8 +22,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Override for HTTPS/token auth: DS_GIT_URL=https://github.com/nuri-com/nuri-design-system.git
-const DS_GIT = process.env.DS_GIT_URL ?? 'git@github.com:nuri-com/nuri-design-system.git';
+const DS_GIT = 'git@github.com:nuri-com/nuri-design-system.git';
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const vendorParent = join(appRoot, 'ds');
 const vendorDir = join(vendorParent, 'nuri');
@@ -74,6 +73,14 @@ try {
   const manifestPath = join(stagedOut, 'MANIFEST.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   writeFileSync(manifestPath, JSON.stringify({ ref, ...manifest }, null, 2) + '\n');
+
+  // Resolve the exporter's {{REF}} placeholders (version banner + the
+  // version-exact doc links): the tag when pinned, the commit for --local.
+  const readmePath = join(stagedOut, 'README.md');
+  if (existsSync(readmePath)) {
+    const pin = ref === 'local' ? String(manifest.commit) : ref;
+    writeFileSync(readmePath, readFileSync(readmePath, 'utf8').replaceAll('{{REF}}', pin));
+  }
 
   // Swap: old copy → backup, staged copy → live.
   if (existsSync(vendorDir)) renameSync(vendorDir, backupDir);

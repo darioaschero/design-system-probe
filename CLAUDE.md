@@ -12,5 +12,3 @@ This repo is the **integration probe** for the nuri design system. Rules:
 - `App.tsx` is the probe screen: it must keep exercising theme provider, View/Text/Icon layout
   props, Button variants, and the full BottomSheet family (all detents, dismissible off,
   scrim dismiss). Extend it when the DS grows surface; don't turn it into a product demo.
-- `SPEC-FEEDBACK.md` is the historical API-gap catalogue from the first consumer spike —
-  append new findings there with the same `F-*` ID convention rather than scattering notes.
