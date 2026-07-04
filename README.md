@@ -21,6 +21,11 @@ The script clones the DS repo at the tag, runs **that tag's own exporter**
 `tsc --noEmit`. `ds/nuri/` is generated — never edit it by hand; upgrading is a re-pull and the
 whole upgrade is one reviewable diff.
 
+**Import contract:** all DS imports go through the `@ds` alias (tsconfig paths → `ds/nuri/index.ts`).
+There is deliberately no `@ds/*` mapping — the barrel is the only sanctioned import target and
+`ds/nuri/internal/` is never imported directly, so its layout stays free to change. The same
+`@ds` alias exists in the DS repo's expo-demo: screen code is copy-portable between the repos.
+
 ## Gates
 
 ```bash

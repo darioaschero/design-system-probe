@@ -18,8 +18,8 @@ import {
   NuriThemeProvider,
   Text,
   View,
-} from './ds/nuri';
-import type { BottomSheetDetent } from './ds/nuri';
+} from '@ds';
+import type { BottomSheetDetent } from '@ds';
 
 const DETENTS: readonly BottomSheetDetent[] = ['content', 'large', 'full'];
 
