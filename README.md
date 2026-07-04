@@ -1,4 +1,4 @@
-# design-system-check
+# design-system-probe
 
 The **nuri DS integration probe**: a minimal Expo app that deliberately mirrors
 **nuri-expo's exact stack** — Expo 53 · RN 0.79.6 · React 19.0 · TS 5.8 (same strict flags) —
@@ -32,7 +32,7 @@ npm run ios                              # native leg: animation feel, keyboard,
 
 ## History
 
-The previous incarnation of this repo was a first-pass consumer spike (`nuri-vault-spike`,
+This repo continues nuri-com/design-system-check (frozen: forking disabled, write access unavailable). The previous incarnation was a first-pass consumer spike (`nuri-vault-spike`,
 Expo 56) — its API-gap findings are preserved in [SPEC-FEEDBACK.md](SPEC-FEEDBACK.md) and feed
 the DS component roadmap (TextInput, Button children typing, icon coverage, …). The sheet gap
 it recorded (F-MODAL-1) is closed by the BottomSheet family this probe now exercises.
