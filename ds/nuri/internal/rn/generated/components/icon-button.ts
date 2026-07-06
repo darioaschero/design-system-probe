@@ -4,7 +4,7 @@
  * The exact public export for `icon-button` (Path C component-API). `{Name}Props`
  * is emitted from the descriptor's `api` (packages/spec/components/icon-button.ts);
  * the component adapter normalizes public props into selection, content,
- * behaviour, and accent scope before calling the shared descriptor renderer.
+ * behaviour, and optional accent scope before calling the shared descriptor renderer.
  *
  * Source · the authored descriptor `api`+`variants`. Emitter · scripts/parsers/
  * components-api.js — run `npm run build`. Committed (decision 35) · the re-emit
@@ -22,7 +22,6 @@ import type { IconName } from '../data/icons';
 
 export type IconButtonProps = {
   variant?: 'solid' | 'soft' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
   accent?: Accent;
   onPress?: () => void;
   disabled?: boolean;
@@ -38,7 +37,6 @@ const iconButtonDisplayName = nuriNames('icon-button').rn;
 const IconButtonInner: React.FC<IconButtonProps> = (props) => {
   const selection: Record<string, string> = {
     "variant": props.variant ?? "soft",
-    "size": props.size ?? "md",
   };
   const content: Partial<Record<IconButtonPart, React.ReactNode>> = {};
   if (props.icon !== undefined) content["icon"] = props.icon;
