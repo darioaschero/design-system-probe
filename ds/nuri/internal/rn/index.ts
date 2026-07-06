@@ -26,6 +26,14 @@
 export * from './contract';
 export * from './theme';
 
+// The overlay runtime — the DS overlay layer (route B · docs/bottom-sheet-
+// improvements.md). OverlayProvider is a root provider (like NuriThemeProvider)
+// the consumer mounts once, ABOVE their safe-area padding; <BottomSheet>
+// registers its subtree into it via useOverlay. RN-only runtime behaviour (no
+// web equivalent — web is a static device-frame layer).
+export { OverlayProvider, useOverlay, OverlayContext } from './overlay';
+export type { OverlayApi, OverlayLayerOptions } from './overlay';
+
 // The theme PAYLOAD shape (typed) + the interaction baseline are public; the
 // PAYLOAD BUILDER (`buildNuriTheme`) is an internal engine detail (SEED-4 · Arc 1)
 // — the provider/scope drive it, consumers never call it — so it is NOT re-exported
@@ -76,7 +84,9 @@ export {
   ListSeparator,
   BottomSheet,
   BottomSheetPanel,
+  BottomSheetTopbar,
   BottomSheetScroll,
+  BottomSheetFooter,
 } from './primitives';
 export type {
   ViewProps,
@@ -93,7 +103,9 @@ export type {
   BottomSheetDetent,
   BottomSheetScrim,
   BottomSheetPanelProps,
+  BottomSheetTopbarProps,
   BottomSheetScrollProps,
+  BottomSheetFooterProps,
 } from './primitives';
 
 // Generated component adapters (Path C · Phase 3). Each descriptor's `api` emits
@@ -101,7 +113,7 @@ export type {
 // into selection, content, behaviour, and accent scope before calling the shared
 // renderer. The renderer receives a descriptor instance; it no longer derives a
 // consumer API from anatomy.
-//   <Button variant="solid" size="md" accent="lilac" onPress={…}>Buy</Button>
+//   <Button variant="solid" size="lg" accent="lilac" onPress={…}>Buy</Button>
 //   <Button><ButtonText>Buy</ButtonText><ButtonIcon name="apple" /></Button>
 //   <IconAvatar variant="soft" icon="apple" />
 //   <IconButton variant="soft" icon="apple" accessibilityLabel="Buy" onPress={…} />
@@ -112,6 +124,9 @@ export {
   Button,
   ButtonText,
   ButtonIcon,
+  Alert,
+  AlertIcon,
+  AlertButton,
   IconAvatar,
   Topbar,
   TopbarLeading,
@@ -128,6 +143,10 @@ export {
   ListActionTrailingText,
   ListActionTrailingTextMuted,
   ListActionTrailIcon,
+  TextField,
+  TextFieldLabel,
+  TextFieldButton,
+  TextFieldIconButton,
   TabBarItem,
   TabBar,
 } from './generated/components';
@@ -135,6 +154,9 @@ export type {
   ButtonProps,
   ButtonTextProps,
   ButtonIconProps,
+  AlertProps,
+  AlertIconProps,
+  AlertButtonProps,
   IconAvatarProps,
   TopbarProps,
   IconButtonProps,
@@ -146,6 +168,10 @@ export type {
   ListActionTrailingTextProps,
   ListActionTrailingTextMutedProps,
   ListActionTrailIconProps,
+  TextFieldProps,
+  TextFieldLabelProps,
+  TextFieldButtonProps,
+  TextFieldIconButtonProps,
   TabBarItemProps,
   TabBarProps,
 } from './generated/components';

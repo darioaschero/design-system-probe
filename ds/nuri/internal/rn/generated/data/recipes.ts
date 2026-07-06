@@ -20,6 +20,59 @@
 import type { BakedComponentRecipe } from '../../runtime/resolve';
 
 export const recipes: Record<string, BakedComponentRecipe> = {
+  "alert": {
+    "root": {
+      "el": "view",
+      "open": true,
+      "geometry": {
+        "base": {
+          "flexDirection": "row",
+          "alignItems": "center",
+          "gap": 6
+        },
+        "variants": {
+          "variant": {
+            "soft": {
+              "minHeight": 54,
+              "padding": 12,
+              "paddingStart": 18,
+              "borderRadius": 9999
+            }
+          }
+        }
+      }
+    },
+    "icon": {
+      "el": "icon",
+      "geometry": {
+        "base": {
+          "width": 18,
+          "height": 18
+        },
+        "variants": {}
+      }
+    },
+    "message": {
+      "el": "text",
+      "geometry": {
+        "base": {
+          "flexGrow": 1,
+          "flexShrink": 1,
+          "minWidth": 0
+        },
+        "variants": {}
+      },
+      "typography": {
+        "base": {
+          "size": "sm",
+          "emphasis": true,
+          "align": "start",
+          "flow": "truncate",
+          "lines": 1
+        }
+      }
+    }
+  },
   "button": {
     "root": {
       "el": "pressable",
@@ -32,19 +85,28 @@ export const recipes: Record<string, BakedComponentRecipe> = {
         "variants": {
           "size": {
             "sm": {
+              "gap": 4,
               "minHeight": 36,
-              "paddingHorizontal": 12,
-              "borderRadius": 9999
-            },
-            "md": {
-              "minHeight": 48,
               "paddingHorizontal": 18,
               "borderRadius": 9999
             },
             "lg": {
+              "gap": 6,
               "minHeight": 54,
               "paddingHorizontal": 24,
               "borderRadius": 9999
+            }
+          },
+          "fill": {
+            "even": {
+              "flexGrow": 1,
+              "flexShrink": 1,
+              "flexBasis": 0,
+              "minWidth": 0
+            },
+            "hug": {
+              "flexGrow": 0,
+              "flexShrink": 0
             }
           }
         }
@@ -68,15 +130,15 @@ export const recipes: Record<string, BakedComponentRecipe> = {
           "size": {
             "sm": {
               "size": "sm",
-              "emphasis": true
-            },
-            "md": {
-              "size": "md",
-              "emphasis": true
+              "emphasis": true,
+              "flow": "truncate",
+              "lines": 1
             },
             "lg": {
               "size": "md",
-              "emphasis": true
+              "emphasis": true,
+              "flow": "truncate",
+              "lines": 1
             }
           }
         }
@@ -91,10 +153,6 @@ export const recipes: Record<string, BakedComponentRecipe> = {
             "sm": {
               "width": 18,
               "height": 18
-            },
-            "md": {
-              "width": 24,
-              "height": 24
             },
             "lg": {
               "width": 24,
@@ -141,7 +199,8 @@ export const recipes: Record<string, BakedComponentRecipe> = {
           "gap": 6,
           "height": 54,
           "paddingStart": 18,
-          "paddingEnd": 18
+          "paddingEnd": 18,
+          "paddingTop": 6
         },
         "variants": {}
       }
@@ -196,30 +255,13 @@ export const recipes: Record<string, BakedComponentRecipe> = {
           "flexDirection": "row",
           "alignItems": "center",
           "justifyContent": "center",
-          "gap": 6
+          "gap": 6,
+          "minHeight": 48,
+          "minWidth": 48,
+          "paddingHorizontal": 12,
+          "borderRadius": 9999
         },
-        "variants": {
-          "size": {
-            "sm": {
-              "minHeight": 36,
-              "minWidth": 36,
-              "paddingHorizontal": 6,
-              "borderRadius": 9999
-            },
-            "md": {
-              "minHeight": 48,
-              "minWidth": 48,
-              "paddingHorizontal": 12,
-              "borderRadius": 9999
-            },
-            "lg": {
-              "minHeight": 54,
-              "minWidth": 54,
-              "paddingHorizontal": 12,
-              "borderRadius": 9999
-            }
-          }
-        }
+        "variants": {}
       },
       "interactive": {
         "base": {
@@ -232,23 +274,11 @@ export const recipes: Record<string, BakedComponentRecipe> = {
     "icon": {
       "el": "icon",
       "geometry": {
-        "base": {},
-        "variants": {
-          "size": {
-            "sm": {
-              "width": 18,
-              "height": 18
-            },
-            "md": {
-              "width": 24,
-              "height": 24
-            },
-            "lg": {
-              "width": 24,
-              "height": 24
-            }
-          }
-        }
+        "base": {
+          "width": 24,
+          "height": 24
+        },
+        "variants": {}
       }
     }
   },
@@ -286,29 +316,6 @@ export const recipes: Record<string, BakedComponentRecipe> = {
         }
       }
     },
-    "leadingAvatar": {
-      "el": "view",
-      "geometry": {
-        "base": {
-          "alignItems": "center",
-          "justifyContent": "center",
-          "width": 48,
-          "height": 48,
-          "borderRadius": 9999
-        },
-        "variants": {}
-      }
-    },
-    "leadingIcon": {
-      "el": "icon",
-      "geometry": {
-        "base": {
-          "width": 18,
-          "height": 18
-        },
-        "variants": {}
-      }
-    },
     "content": {
       "el": "view",
       "geometry": {
@@ -332,7 +339,9 @@ export const recipes: Record<string, BakedComponentRecipe> = {
         "base": {
           "size": "md",
           "emphasis": true,
-          "align": "start"
+          "align": "start",
+          "flow": "truncate",
+          "lines": 1
         }
       }
     },
@@ -345,7 +354,9 @@ export const recipes: Record<string, BakedComponentRecipe> = {
       "typography": {
         "base": {
           "size": "sm",
-          "align": "start"
+          "align": "start",
+          "flow": "truncate",
+          "lines": 1
         }
       }
     },
@@ -370,7 +381,9 @@ export const recipes: Record<string, BakedComponentRecipe> = {
         "base": {
           "size": "md",
           "emphasis": true,
-          "align": "end"
+          "align": "end",
+          "flow": "truncate",
+          "lines": 1
         }
       }
     },
@@ -383,7 +396,9 @@ export const recipes: Record<string, BakedComponentRecipe> = {
       "typography": {
         "base": {
           "size": "sm",
-          "align": "end"
+          "align": "end",
+          "flow": "truncate",
+          "lines": 1
         }
       }
     },
@@ -395,6 +410,66 @@ export const recipes: Record<string, BakedComponentRecipe> = {
           "height": 18
         },
         "variants": {}
+      }
+    }
+  },
+  "text-field": {
+    "root": {
+      "el": "view",
+      "geometry": {
+        "base": {
+          "flexDirection": "column",
+          "alignItems": "stretch",
+          "gap": 12
+        },
+        "variants": {}
+      }
+    },
+    "label": {
+      "el": "text",
+      "geometry": {
+        "base": {},
+        "variants": {}
+      },
+      "typography": {
+        "base": {
+          "size": "sm",
+          "emphasis": true,
+          "align": "start",
+          "flow": "truncate",
+          "lines": 1
+        }
+      }
+    },
+    "box": {
+      "el": "view",
+      "geometry": {
+        "base": {
+          "flexDirection": "row",
+          "alignItems": "center",
+          "height": 54,
+          "paddingStart": 12,
+          "paddingEnd": 6,
+          "borderRadius": 9
+        },
+        "variants": {}
+      }
+    },
+    "input": {
+      "el": "input",
+      "geometry": {
+        "base": {
+          "flexGrow": 1,
+          "flexShrink": 1,
+          "minWidth": 0
+        },
+        "variants": {}
+      },
+      "typography": {
+        "base": {
+          "size": "md",
+          "align": "start"
+        }
       }
     }
   },
@@ -441,7 +516,9 @@ export const recipes: Record<string, BakedComponentRecipe> = {
       "typography": {
         "base": {
           "size": "xs",
-          "emphasis": true
+          "emphasis": true,
+          "flow": "truncate",
+          "lines": 1
         }
       }
     }
@@ -471,6 +548,7 @@ export const recipes: Record<string, BakedComponentRecipe> = {
           "alignItems": "stretch",
           "flexGrow": 1,
           "flexShrink": 0,
+          "paddingBottom": 18,
           "borderTopLeftRadius": 18,
           "borderTopRightRadius": 18,
           "shadowOffset": {

@@ -113,13 +113,19 @@ export type TypeKey = TypeSize;
 // `flex:none` centre region lands at the bar's TRUE centre regardless of
 // edge-content asymmetry (the TopbarLeading/Trailing edges · the centring
 // forcing function). Distinct from `grow-shrink` (basis auto · the old pivot).
+// `hug` (flex 0 0 auto · the 3rd versioned fill add) = the no-shrink content floor.
+// `distribute` (a versioned add) is the PARENT-side even split — every DIRECT CHILD
+// takes an equal share (flex 1 1 0), the concise "N equal buttons/chips in a row"
+// without a per-child `fill`. The FIRST stack property whose effect lands on CHILDREN,
+// not the node (web `> *` combinator · RN per-child inject · a node no-op in the appliers).
 export type StackNS = {
   direction?: 'row' | 'column';
   align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
   justify?: 'start' | 'center' | 'end' | 'between' | 'around';
   gap?: SpaceLeaf;
   wrap?: boolean;
-  fill?: 'grow' | 'grow-shrink' | 'even';
+  fill?: 'grow' | 'grow-shrink' | 'even' | 'hug';
+  distribute?: 'even';
 };
 
 // `box` — the element's own visual box: GEOMETRY ONLY, no colour
@@ -164,12 +170,16 @@ export type BoxNS = {
 // engine applies the weight override when `emphasis` (web `[data-type-emphasis]`
 // · RN typeStyle's 2nd arg). `align` is TEXT alignment (start/center/end), not
 // StackNS layout alignment; web had the raw wrapper dispatch, and RN maps it to
-// TextStyle.textAlign at the resolver boundary. Was a single fused `TypeKey`
-// (`mdEm`) — de-fused.
+// TextStyle.textAlign at the resolver boundary. `flow`/`lines` are the first
+// shared text-flow model: wrap = natural wrapping (no clamp), truncate = max-line
+// tail ellipsis, with `lines` required only for truncate. Was a single fused
+// `TypeKey` (`mdEm`) — de-fused.
 export type TypographyNS = {
   size?: TypeSize;
   emphasis?: boolean;
   align?: 'start' | 'center' | 'end';
+  flow?: 'wrap' | 'truncate';
+  lines?: 1 | 2 | 3;
 };
 
 // `palette` — ALL colour, from the semantic inputs (65.3 §6 · mirrors the
@@ -243,7 +253,7 @@ export const PALETTE_KEYS = Object.keys(
   { variant: 0, accent: 0, muted: 0, chrome: 0 } satisfies Record<keyof PaletteNS, 0>,
 );
 export const TYPOGRAPHY_KEYS = Object.keys(
-  { size: 0, emphasis: 0, align: 0 } satisfies Record<keyof TypographyNS, 0>,
+  { size: 0, emphasis: 0, align: 0, flow: 0, lines: 0 } satisfies Record<keyof TypographyNS, 0>,
 );
 export const EFFECT_KEYS = Object.keys(
   { elevation: 0 } satisfies Record<keyof EffectNS, 0>,
@@ -274,7 +284,7 @@ export type Part = PartId;
 // `El` add (decision 65 · versioned · amendment 65.13); the coherence guard
 // (scripts/component-api.test.js Channel 2) pins el:'pressable' ≡ the
 // declared `behaviour.pressable.target` ≡ the `interactive`-flagged parts.
-export type El = 'view' | 'text' | 'icon' | 'pressable';
+export type El = 'view' | 'text' | 'icon' | 'pressable' | 'input';
 
 // ── The RUNTIME host/leaf partition of `El` (the PR-#132 review pass) ────────
 // The renderers and guards need the classification AT RUNTIME: HOSTS (view ·
@@ -292,14 +302,23 @@ const EL_CLASS = {
   pressable: 'host',
   text: 'leaf',
   icon: 'leaf',
-} satisfies Record<El, 'host' | 'leaf'>;
+  input: 'control',
+} satisfies Record<El, 'host' | 'leaf' | 'control'>;
 export const HOST_ELS = (Object.keys(EL_CLASS) as El[]).filter((el) => EL_CLASS[el] === 'host');
 export const LEAF_ELS = (Object.keys(EL_CLASS) as El[]).filter((el) => EL_CLASS[el] === 'leaf');
+export const CONTROL_ELS = (Object.keys(EL_CLASS) as El[]).filter((el) => EL_CLASS[el] === 'control');
 
 // A part's anatomy: its element, whether it is OPEN (accepts positional
 // children · the §7 open-primitive layer), and any nested named parts.
+export type ComponentRef = {
+  component: string;
+  props?: Record<string, string | boolean | number | null>;
+};
+
 export type PartAnatomy<P extends PartId = PartId> = {
-  el: El;
+  el?: El;
+  component?: string;
+  props?: ComponentRef['props'];
   open?: boolean;
   parts?: Partial<Record<Exclude<P, 'root'>, PartAnatomy<P>>>;
 };
@@ -369,14 +388,28 @@ export type SlotSpec<P extends PartId = PartId> = {
 // The component's declared public API (v1 · docs/archive/component-api-target.md
 // §"The canonical `api` shape"). `axes` = which VARIANT axes surface as public
 // style props (the default already lives in `defaults`); `themeScope.accent` =
-// the universal-but-DECLARED accent scope (Option 1); `behaviour.pressable` =
+// the component-local accent scope when a component exposes one;
+// `behaviour.pressable` =
 // the press affordance, ONLY where declared and the target part is `interactive`;
 // `propMaps.selected` = the `selected`→state-axis bridge as DATA (kills the
 // `'state' extends keyof A` factory magic); `slots` = the content entry points.
+export type InputBehaviourProp = 'value'
+  | 'onChangeText'
+  | 'placeholder'
+  | 'inputMode'
+  | 'secureTextEntry'
+  | 'disabled'
+  | 'onFocus'
+  | 'onBlur'
+  | 'accessibilityLabel';
+
 export type ComponentApi<P extends PartId = PartId> = {
   axes: string[];
   themeScope?: { accent: true };
-  behaviour?: { pressable?: { target: P; props: ('onPress' | 'disabled' | 'accessibilityLabel')[] } };
+  behaviour?: {
+    pressable?: { target: P; props: ('onPress' | 'disabled' | 'accessibilityLabel')[] };
+    input?: { target: P; focusTarget?: P; labelPart?: P; props: InputBehaviourProp[] };
+  };
   propMaps?: { selected?: { axis: string; true: string; false: string } };
   slots: Record<string, SlotSpec<P>>;
 };

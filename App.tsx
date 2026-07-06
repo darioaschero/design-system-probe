@@ -1,115 +1,86 @@
-/* ──────────────────────────────────────────────────────────────
- * PROBE · one screen that exercises the vendored DS surface on
- * nuri-expo's exact stack: theme provider · View/Text/Icon layout
- * props · generated Button variants · the BottomSheet family
- * (all three detents + dismissible off).
- * ────────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+ * APP · the Nuri consumption example, full-screen.
+ * ──────────────────────────────────────────────────────────────────
+ * The NAVIGATOR role (decision 58): safe-area is owned in ONE place —
+ * here — so the Nuri components stay inset-agnostic. The canvas-coloured
+ * root pads the status-bar inset at top and the home-indicator at bottom
+ * (insets are 0 on web). App also owns everything the DS deliberately
+ * does NOT: the <NuriThemeProvider> root, the route state, and the
+ * tab-items DATA. The demo opens on the playground screens surface, with a
+ * simple menu for launching bottom-sheet examples. No navigation library.
+ *
+ * accent="neutral" mirrors the playground page scope (the tab-bar boards
+ * render under accent=neutral — the accent pops are the screens' OWN
+ * accent="orange"/"lilac" props).
+ *
+ * ══════════════════════════════════════════════════════════════════ */
 
 import * as React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import {
-  BottomSheet,
-  BottomSheetPanel,
-  BottomSheetScroll,
-  Button,
-  NuriIcon,
-  NuriThemeProvider,
-  Text,
-  View,
-} from '@ds';
-import type { BottomSheetDetent } from '@ds';
+import { NuriThemeProvider, OverlayProvider, useNuriTheme } from '@ds';
+import type { Theme } from '@ds';
+import { Screens } from './src/screens';
 
-const DETENTS: readonly BottomSheetDetent[] = ['content', 'large', 'full'];
-
-const Probe: React.FC = () => {
+function ThemedRoot({
+  mode,
+  onToggleTheme,
+}: {
+  mode: Theme;
+  onToggleTheme: () => void;
+}) {
+  const theme = useNuriTheme();
+  // The ONE place safe-area is owned (decision 58 · navigator role).
   const insets = useSafeAreaInsets();
-  const [sheetOpen, setSheetOpen] = React.useState(false);
-  const [detentIndex, setDetentIndex] = React.useState(0);
-  const [dismissible, setDismissible] = React.useState(true);
-  const detent = DETENTS[detentIndex];
-
   return (
-    <View direction="column" align="stretch" justify="start" fill="grow" chrome="canvas">
-      <View direction="column" align="stretch" gap="lg" paddingX="lg" paddingY="md" fill="grow">
-        <View direction="row" align="center" gap="sm">
-          <NuriIcon name="nuri" />
-          <Text size="xl" emphasis>
-            DS integration probe
-          </Text>
-        </View>
-
-        <View aspectRatio="card" radius="lg" />
-        <Text size="3xl" emphasis align="center">
-          € 25.87
-        </Text>
-
-        <View direction="row" align="center" gap="sm">
-          <View fill="even">
-            <Button size="lg" variant="soft">
-              Receive
-            </Button>
-          </View>
-          <View fill="even">
-            <Button size="lg" variant="solid" accent="orange">
-              Send
-            </Button>
-          </View>
-        </View>
-
-        <Button size="lg" variant="solid" onPress={() => setSheetOpen(true)}>
-          Open sheet
-        </Button>
-      </View>
-
-      <BottomSheet
-        open={sheetOpen}
-        detent={detent}
-        dismissible={dismissible}
-        onOpenChange={setSheetOpen}
-      >
-        <BottomSheetPanel>
-          <BottomSheetScroll>
-            <View direction="column" align="stretch" gap="md" paddingX="lg" paddingY="md">
-              <Text size="xl" emphasis>
-                Sheet · {detent}
-              </Text>
-              <Button
-                size="lg"
-                variant="soft"
-                onPress={() => setDetentIndex((detentIndex + 1) % DETENTS.length)}
-              >
-                Cycle detent
-              </Button>
-              <Button size="lg" variant="soft" onPress={() => setDismissible(!dismissible)}>
-                {dismissible ? 'Lock (dismissible off)' : 'Unlock (dismissible on)'}
-              </Button>
-              <Button size="lg" variant="solid" accent="orange" onPress={() => setSheetOpen(false)}>
-                Close
-              </Button>
-              <Text>
-                Scrim tap and the close button must dismiss; when locked, only the unlock + close
-                buttons work. Cycling detents while open probes S3 on this RN version.
-              </Text>
-            </View>
-          </BottomSheetScroll>
-        </BottomSheetPanel>
-      </BottomSheet>
-
-      {/* safe-area shim: the probe owns insets, the DS stays inset-agnostic */}
-      {insets.bottom > 0 ? <View paddingY="md" /> : null}
-      <StatusBar style="auto" />
+    <View
+      style={[
+        styles.root,
+        {
+          backgroundColor: theme.chrome.canvas.bg,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+    >
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <Screens onToggleTheme={onToggleTheme} />
     </View>
   );
-};
+}
+
+function Root() {
+  const [mode, setMode] = React.useState<Theme>('light');
+  const toggleTheme = React.useCallback(
+    () => setMode((m) => (m === 'light' ? 'dark' : 'light')),
+    [],
+  );
+
+  // <OverlayProvider> sits INSIDE the theme provider (so a registered sheet's
+  // panel themes through the same payload) but ABOVE the safe-area padding
+  // (it wraps ThemedRoot, which owns the padded root) — so the overlay outlet's
+  // absoluteFill fills the WHOLE window, and a sheet's scrim dims the status bar
+  // too. This is the inset-agnostic stance: the DS provider consumes no insets;
+  // the consumer's placement above the padding is what makes it full-frame.
+  return (
+    <NuriThemeProvider mode={mode} accent="neutral">
+      <OverlayProvider>
+        <ThemedRoot mode={mode} onToggleTheme={toggleTheme} />
+      </OverlayProvider>
+    </NuriThemeProvider>
+  );
+}
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NuriThemeProvider mode="light" accent="neutral">
-        <Probe />
-      </NuriThemeProvider>
+      <Root />
     </SafeAreaProvider>
   );
 }
+
+const styles = {
+  root: { flex: 1 },
+};

@@ -15,7 +15,7 @@ cp tools/ds-pull.mjs  <nuri-expo>/tools/ds-pull.mjs
 **2 · Run it** (pin to a release tag — needs read access to nuri-design-system):
 
 ```bash
-node tools/ds-pull.mjs rn/v0.1.0-alpha.1
+node tools/ds-pull.mjs rn/v0.1.0-alpha.4
 ```
 
 This vendors the DS into `ds/nuri/` (self-contained TS source, zero new npm dependencies —
@@ -35,19 +35,34 @@ and per-component doc links.
 
 Barrel only — there is deliberately no `@ds/*`, so the vendored internals cannot be imported.
 
-**4 · Wrap the screen you're restyling in the theme, and import from `@ds`:**
+**4 · Wire the DS providers around the screen, and import from `@ds`:**
 
 ```tsx
-import { NuriThemeProvider, View, Text, Button } from '@ds';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NuriThemeProvider, OverlayProvider, View, Text, Button } from '@ds';
 
-<NuriThemeProvider mode="light" accent="neutral">
-  {/* the screen subtree — DS tokens rule inside, legacy designSystem.ts outside */}
-</NuriThemeProvider>
+<SafeAreaProvider>
+  <NuriThemeProvider mode="light" accent="neutral">
+    <OverlayProvider>
+      {/* the screen subtree — DS tokens rule inside, legacy designSystem.ts outside */}
+    </OverlayProvider>
+  </NuriThemeProvider>
+</SafeAreaProvider>
 ```
 
 Adopt per screen, not app-wide: wrap each screen/modal you convert; untouched screens keep the
 existing styling. (Add the scoping rule to nuri-expo's CLAUDE.md so nobody "fixes" DS screens
 back to `COLORS.*`.)
+
+Provider ownership:
+
+- `SafeAreaProvider` is the app/Expo provider from `react-native-safe-area-context`.
+- `NuriThemeProvider` scopes the DS theme payload.
+- `OverlayProvider` is required for DS overlays such as `BottomSheet`; place it inside the theme
+  provider and above the safe-area-padded screen content, as shown in `App.tsx`.
+
+No extra package is required for this probe shape: `react-native-safe-area-context` is already in
+this app's dependency list and is part of the nuri-expo stack being mirrored.
 
 ## Verifying (what this repo runs per DS release)
 
@@ -58,5 +73,6 @@ npm run web                                     # render: screen + sheet (detent
 npm run ios                                     # native: animation feel, keyboard, safe area
 ```
 
-`App.tsx` is the probe screen — theme, layout primitives, Button variants, and the full
-BottomSheet family in one place; treat it as the reference for DS usage patterns.
+`App.tsx` is the probe shell — safe-area ownership, theme provider placement, overlay provider
+placement, and the copied playground-parity DS demo. Treat it as the reference for DS usage
+patterns.
