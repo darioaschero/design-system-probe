@@ -45,8 +45,12 @@ export { Pressable } from './Pressable';
 export type { PressableProps } from './Pressable';
 export { Screen } from './Screen';
 export type { ScreenProps } from './Screen';
+export { Header } from './Header';
+export type { HeaderProps } from './Header';
 export { Scroll } from './Scroll';
-export type { ScrollProps, ScrollInsetBottom } from './Scroll';
+export type { ScrollProps, ScrollInsetBottom, ScrollInsetTop } from './Scroll';
+export { Footer } from './Footer';
+export type { FooterProps } from './Footer';
 export { Dock } from './Dock';
 export type { DockProps, DockEdge } from './Dock';
 export { NuriIcon } from './NuriIcon';
@@ -55,13 +59,10 @@ export { Separator } from './Separator';
 export type { SeparatorProps, SeparatorYSpace } from './Separator';
 export { ListSeparator } from './ListSeparator';
 export type { ListSeparatorProps } from './ListSeparator';
-export { BottomSheet, BottomSheetPanel, BottomSheetTopbar, BottomSheetScroll, BottomSheetFooter } from './BottomSheet';
+export { BottomSheet, BottomSheetPanel } from './BottomSheet';
 export type {
   BottomSheetProps,
   BottomSheetDetent,
   BottomSheetScrim,
   BottomSheetPanelProps,
-  BottomSheetTopbarProps,
-  BottomSheetScrollProps,
-  BottomSheetFooterProps,
 } from './BottomSheet';

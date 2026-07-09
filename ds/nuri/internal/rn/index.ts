@@ -25,6 +25,8 @@
 
 export * from './contract';
 export * from './theme';
+export { NuriSafeAreaProvider, useNuriSafeAreaInsets } from './safe-area';
+export type { NuriSafeAreaInsets, NuriSafeAreaProviderProps } from './safe-area';
 
 // The overlay runtime — the DS overlay layer (route B · docs/bottom-sheet-
 // improvements.md). OverlayProvider is a root provider (like NuriThemeProvider)
@@ -78,15 +80,14 @@ export {
   Text,
   Pressable,
   Screen,
+  Header,
   Scroll,
+  Footer,
   Dock,
   Separator,
   ListSeparator,
   BottomSheet,
   BottomSheetPanel,
-  BottomSheetTopbar,
-  BottomSheetScroll,
-  BottomSheetFooter,
 } from './primitives';
 export type {
   ViewProps,
@@ -94,7 +95,9 @@ export type {
   TextProps,
   PressableProps,
   ScreenProps,
+  HeaderProps,
   ScrollProps,
+  FooterProps,
   DockProps,
   SeparatorProps,
   SeparatorYSpace,
@@ -103,9 +106,6 @@ export type {
   BottomSheetDetent,
   BottomSheetScrim,
   BottomSheetPanelProps,
-  BottomSheetTopbarProps,
-  BottomSheetScrollProps,
-  BottomSheetFooterProps,
 } from './primitives';
 
 // Generated component adapters (Path C · Phase 3). Each descriptor's `api` emits
@@ -119,7 +119,7 @@ export type {
 //   <IconButton variant="soft" icon="apple" accessibilityLabel="Buy" onPress={…} />
 //   <List><ListAction><ListActionLeadingAvatar name="bank" />…</ListAction></List>
 //   <Topbar><TopbarLeading>…</TopbarLeading><TopbarCenter>…</TopbarCenter>…</Topbar>
-//   <TabBar><TabBarItem icon="card" label="Wallet" selected onPress={…} />…</TabBar>
+//   <TabBar><TabBarItem selected><TabBarItemIcon name="card" /><TabBarItemLabel>Wallet</TabBarItemLabel></TabBarItem>…</TabBar>
 export {
   Button,
   ButtonText,
@@ -135,11 +135,9 @@ export {
   IconButton,
   List,
   ListAction,
-  ListActionContent,
   ListActionLeadingAvatar,
   ListActionText,
   ListActionTextMuted,
-  ListActionTrailing,
   ListActionTrailingText,
   ListActionTrailingTextMuted,
   ListActionTrailIcon,
@@ -148,6 +146,8 @@ export {
   TextFieldButton,
   TextFieldIconButton,
   TabBarItem,
+  TabBarItemIcon,
+  TabBarItemLabel,
   TabBar,
 } from './generated/components';
 export type {
@@ -159,6 +159,9 @@ export type {
   AlertButtonProps,
   IconAvatarProps,
   TopbarProps,
+  TopbarLeadingProps,
+  TopbarCenterProps,
+  TopbarTrailingProps,
   IconButtonProps,
   ListProps,
   ListActionProps,
@@ -173,5 +176,7 @@ export type {
   TextFieldButtonProps,
   TextFieldIconButtonProps,
   TabBarItemProps,
+  TabBarItemIconProps,
+  TabBarItemLabelProps,
   TabBarProps,
 } from './generated/components';

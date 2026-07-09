@@ -7,17 +7,16 @@
 
 import * as React from 'react';
 
-import { View } from '@ds';
 import { Home } from './Home';
 import { Menu } from './Menu';
 import { ActionsSheet } from '../sheets/ActionsSheet';
 import { ActivitySheet } from '../sheets/ActivitySheet';
 import { AmountSheet } from '../sheets/AmountSheet';
-import { FormSheet } from '../sheets/FormSheet';
+import { FormSheet, FormSheet2 } from '../sheets/FormSheet';
 import type { WalletTab } from '../components/WalletTabs';
 
 type Page = 'wallet' | 'sheetMenu';
-type OpenSheet = 'none' | 'activity' | 'amount' | 'actions' | 'form';
+type OpenSheet = 'none' | 'activity' | 'amount' | 'actions' | 'form' | 'form2';
 type FormValues = {
   iban: string;
   firstName: string;
@@ -43,7 +42,7 @@ export const Screens: React.FC<{ onToggleTheme: () => void }> = ({ onToggleTheme
   );
 
   return (
-    <View direction="column" align="stretch" justify="start" fill="grow" chrome="canvas">
+    <>
       {page === 'wallet' ? (
         <Home
           selectedTab={wallet}
@@ -58,15 +57,30 @@ export const Screens: React.FC<{ onToggleTheme: () => void }> = ({ onToggleTheme
         />
       )}
 
-      <ActivitySheet open={openSheet === 'activity'} onClose={closeSheet} />
-      <AmountSheet open={openSheet === 'amount'} onClose={closeSheet} />
-      <ActionsSheet open={openSheet === 'actions'} onClose={closeSheet} />
+      <ActivitySheet
+        open={openSheet === 'activity'}
+        onClose={closeSheet}
+      />
+      <AmountSheet
+        open={openSheet === 'amount'}
+        onClose={closeSheet}
+      />
+      <ActionsSheet
+        open={openSheet === 'actions'}
+        onClose={closeSheet}
+      />
       <FormSheet
         open={openSheet === 'form'}
         values={formValues}
         onChangeField={setField}
         onClose={closeSheet}
       />
-    </View>
+      <FormSheet2
+        open={openSheet === 'form2'}
+        values={formValues}
+        onChangeField={setField}
+        onClose={closeSheet}
+      />
+    </>
   );
 };
