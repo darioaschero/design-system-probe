@@ -10,8 +10,11 @@
 // ════════════════════════════════════════════════════════════════
 import * as React from 'react';
 import { Pressable as RNPressable } from 'react-native';
+import type { GestureResponderEvent, Insets, LayoutChangeEvent } from 'react-native';
 import type { BoxNS, StackNS, PaletteNS, InteractiveNS } from '../contract';
 import { flattenInteractive } from '../runtime/resolve';
+import { PressableHost } from '../runtime/pressable-host';
+import type { PressableRole } from '../runtime/pressable-host';
 import { PALETTE_KEYS } from '../../spec/components/schema';
 import {
   BOX_KEYS,
@@ -24,36 +27,67 @@ import {
 } from './shared';
 
 export type PressableProps = BoxNS &
-  StackNS &
+  // `distribute` needs child wrapping, which Pressable supports on neither engine.
+  Omit<StackNS, 'distribute'> &
   PaletteNS &
   InteractiveNS & {
     children?: React.ReactNode;
-    onPress?: () => void;
+    onPress?: (event: GestureResponderEvent) => void;
+    onLongPress?: (event: GestureResponderEvent) => void;
+    hitSlop?: number | Insets;
     disabled?: boolean;
+    role?: PressableRole;
+    selected?: boolean;
     accessibilityLabel?: string;
+    accessibilityHint?: string;
+    testID?: string;
+    onLayout?: (event: LayoutChangeEvent) => void;
+    ref?: React.Ref<React.ElementRef<typeof RNPressable>>;
   };
 
-const PressableImpl: React.FC<PressableProps> = (props) => {
-  const { children, onPress, disabled, accessibilityLabel, ...nsProps } = props;
+const PressableImpl = React.forwardRef<React.ElementRef<typeof RNPressable>, PressableProps>((props, ref) => {
+  const {
+    children,
+    onPress,
+    onLongPress,
+    hitSlop,
+    disabled,
+    role,
+    selected,
+    accessibilityLabel,
+    accessibilityHint,
+    testID,
+    onLayout,
+    ...nsProps
+  } = props;
   const { node, theme } = useResolvedNode(nsProps);
   const isDisabled = !!disabled;
   return (
-    <RNPressable
+    <PressableHost
+      ref={ref}
       onPress={onPress}
+      onLongPress={onLongPress}
+      hitSlop={hitSlop}
       disabled={isDisabled}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled }}
+      role={role}
+      // The open-primitive selected policy (the S2 invariant, gated HERE not in
+      // the shared host): a tab announces its state (omitted → false); a plain
+      // button never carries a selected key.
+      selected={role === 'tab' ? selected === true : undefined}
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      testID={testID}
+      onLayout={onLayout}
       style={({ pressed }) => flattenInteractive(node, theme, { pressed, disabled: isDisabled })}
     >
       {withSurface(node.fg, children)}
-    </RNPressable>
+    </PressableHost>
   );
-};
+});
 PressableImpl.displayName = 'Pressable';
 export const Pressable = withKeys(scopedByAccent(PressableImpl), [
   ...BOX_KEYS,
-  ...STACK_KEYS,
+  ...STACK_KEYS.filter((key) => key !== 'distribute'),
   ...PALETTE_KEYS,
   ...INTERACTIVE_KEYS,
 ]);

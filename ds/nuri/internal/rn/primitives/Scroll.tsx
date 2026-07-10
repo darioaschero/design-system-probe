@@ -3,9 +3,8 @@
 // (scroll.js:8 · "a thin component over <ScrollView>") · no namespace.
 // ════════════════════════════════════════════════════════════════
 import * as React from 'react';
-import { Keyboard, Platform, ScrollView as RNScrollView } from 'react-native';
+import { ScrollView as RNScrollView } from 'react-native';
 import type {
-  KeyboardEvent,
   LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -24,6 +23,9 @@ export type ScrollProps = {
   insetTop?: ScrollInsetTop;
   insetBottom?: ScrollInsetBottom;
   children?: React.ReactNode;
+  testID?: string;
+  onLayout?: (event: LayoutChangeEvent) => void;
+  ref?: React.Ref<React.ElementRef<typeof RNScrollView>>;
 };
 
 type ScrollViewInstance = React.ElementRef<typeof RNScrollView>;
@@ -44,17 +46,23 @@ const FOCUS_BOTTOM_MARGIN = 88;
 const FOCUS_SCROLL_DELAY_MS = 32;
 const FOCUS_SCROLL_REPEAT_DELAY_MS = 60;
 
-const ScrollImpl: React.FC<ScrollProps> = ({
+// Keyboard handling requires a FixedRegionLayoutProvider ancestor. Screen and
+// BottomSheet provide it; a bare Scroll intentionally degrades to no handling.
+const ScrollImpl = React.forwardRef<React.ElementRef<typeof RNScrollView>, ScrollProps>(({
   safeAreaTop = false,
   safeAreaBottom = false,
   insetTop = 'none',
   insetBottom = 'none',
   children,
-}) => {
+  testID,
+  onLayout,
+}, forwardedRef) => {
   const {
     scrollMaxHeight,
     headerHeight,
     footerHeight,
+    keyboardHeight: contextKeyboardHeight,
+    keyboardScreenY: contextKeyboardScreenY,
     keyboardOffset,
     safeAreaTop: hostSafeAreaTop,
     safeAreaBottom: hostSafeAreaBottom,
@@ -71,6 +79,12 @@ const ScrollImpl: React.FC<ScrollProps> = ({
   const rafs = React.useRef<number[]>([]);
   const timers = React.useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const [keyboardPadding, setKeyboardPadding] = React.useState(0);
+
+  const setScrollRef = React.useCallback((instance: ScrollViewInstance | null) => {
+    scrollRef.current = instance;
+    if (typeof forwardedRef === 'function') forwardedRef(instance);
+    else if (forwardedRef) forwardedRef.current = instance;
+  }, [forwardedRef]);
 
   const clearScheduledScrolls = React.useCallback(() => {
     for (const raf of rafs.current) cancelAnimationFrame(raf);
@@ -178,7 +192,6 @@ const ScrollImpl: React.FC<ScrollProps> = ({
   const scheduleScrollToInput = React.useCallback((input: TextInput | null, delay = FOCUS_SCROLL_DELAY_MS) => {
     if (!input) return;
     clearScheduledScrolls();
-    focusedInput.current = input;
     const raf = requestAnimationFrame(() => {
       rafs.current = rafs.current.filter((item) => item !== raf);
       const timer = setTimeout(() => {
@@ -191,38 +204,48 @@ const ScrollImpl: React.FC<ScrollProps> = ({
   }, [clearScheduledScrolls, performScrollToInput]);
 
   React.useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const showSub = Keyboard.addListener(showEvent, (event: KeyboardEvent) => {
+    const previousHeight = keyboardHeight.current;
+    const wasVisible = keyboardHeight.current > 0;
+    const isVisible = contextKeyboardHeight > 0;
+
+    if (isVisible) {
       if (preKeyboardViewportHeight.current === 0) {
         preKeyboardViewportHeight.current = viewportHeight.current || scrollMaxHeight || 0;
       }
-      keyboardHeight.current = event.endCoordinates.height;
-      keyboardScreenY.current = event.endCoordinates.screenY > 0 ? event.endCoordinates.screenY : null;
+      keyboardHeight.current = contextKeyboardHeight;
+      keyboardScreenY.current = contextKeyboardScreenY;
       updateKeyboardPadding();
-      scheduleScrollToInput(focusedInput.current, FOCUS_SCROLL_REPEAT_DELAY_MS);
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
+      if (!wasVisible || contextKeyboardHeight !== previousHeight) {
+        scheduleScrollToInput(focusedInput.current, FOCUS_SCROLL_REPEAT_DELAY_MS);
+      }
+      return;
+    }
+
+    if (wasVisible) {
       preKeyboardViewportHeight.current = 0;
       keyboardHeight.current = 0;
       keyboardScreenY.current = null;
       setKeyboardPadding(0);
-    });
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-      clearScheduledScrolls();
-    };
-  }, [clearScheduledScrolls, scheduleScrollToInput, scrollMaxHeight, updateKeyboardPadding]);
+    }
+  }, [contextKeyboardHeight, contextKeyboardScreenY, scheduleScrollToInput, scrollMaxHeight, updateKeyboardPadding]);
+
+  React.useEffect(() => clearScheduledScrolls, [clearScheduledScrolls]);
 
   const focusScrollApi = React.useMemo<FocusScrollApi>(() => ({
-    requestScrollToFocusedInput: (input) => scheduleScrollToInput(input),
+    onInputFocus: (input) => {
+      focusedInput.current = input;
+      scheduleScrollToInput(input);
+    },
+    onInputBlur: (input) => {
+      if (focusedInput.current === input) focusedInput.current = null;
+    },
   }), [scheduleScrollToInput]);
 
   const handleLayout = React.useCallback((event: LayoutChangeEvent) => {
     viewportHeight.current = event.nativeEvent.layout.height;
     if (keyboardHeight.current > 0) updateKeyboardPadding();
-  }, [updateKeyboardPadding]);
+    onLayout?.(event);
+  }, [onLayout, updateKeyboardPadding]);
 
   const handleScroll = React.useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollY.current = event.nativeEvent.contentOffset.y;
@@ -251,7 +274,8 @@ const ScrollImpl: React.FC<ScrollProps> = ({
 
   return (
     <RNScrollView
-      ref={scrollRef}
+      ref={setScrollRef}
+      testID={testID}
       style={scrollStyle}
       contentContainerStyle={contentStyle}
       keyboardShouldPersistTaps="handled"
@@ -262,7 +286,7 @@ const ScrollImpl: React.FC<ScrollProps> = ({
       <FocusScrollProvider value={focusScrollApi}>{children}</FocusScrollProvider>
     </RNScrollView>
   );
-};
+});
 ScrollImpl.displayName = 'Scroll';
 export const Scroll = withKeys(ScrollImpl, ['safeAreaTop', 'safeAreaBottom', 'insetTop', 'insetBottom']);
 const SCROLL_CONTENT_STYLE: ViewStyle = { flexGrow: 1 };

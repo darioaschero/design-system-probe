@@ -17,7 +17,7 @@
  * ────────────────────────────────────────────────────────────── */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -69,9 +69,26 @@ let swapped = false;
 try {
   run('node', ['scripts/export-rn.mjs', stagedOut], checkout);
 
+  // alpha.6's exporter follows the classifier's runtime .js import but omits
+  // its adjacent authored .d.ts. Carry that declaration companion verbatim so
+  // TS 5.8 consumes the tag's intended generic/discriminated-union contract.
+  const classifierDeclaration = join('packages', 'spec', 'composition', 'classify.d.ts');
+  const classifierRuntimeOut = join(stagedOut, 'internal', 'spec', 'composition', 'classify.js');
+  const classifierDeclarationOut = join(stagedOut, 'internal', 'spec', 'composition', 'classify.d.ts');
+  let addedDeclarations = 0;
+  if (
+    existsSync(join(checkout, classifierDeclaration)) &&
+    existsSync(classifierRuntimeOut) &&
+    !existsSync(classifierDeclarationOut)
+  ) {
+    copyFileSync(join(checkout, classifierDeclaration), classifierDeclarationOut);
+    addedDeclarations += 1;
+  }
+
   // Stamp the pin into the exporter's manifest while still staged.
   const manifestPath = join(stagedOut, 'MANIFEST.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  manifest.files += addedDeclarations;
   writeFileSync(manifestPath, JSON.stringify({ ref, ...manifest }, null, 2) + '\n');
 
   // Resolve the exporter's {{REF}} placeholders (version banner + the
