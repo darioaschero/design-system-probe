@@ -15,7 +15,7 @@ cp tools/ds-pull.mjs  <nuri-expo>/tools/ds-pull.mjs
 **2 · Run it** (pin to a release tag — needs read access to nuri-design-system):
 
 ```bash
-node tools/ds-pull.mjs rn/v0.1.0-alpha.6
+node tools/ds-pull.mjs rn/v0.1.0-alpha.7
 ```
 
 This vendors the DS into `ds/nuri/` (self-contained TS source, zero new npm dependencies —
