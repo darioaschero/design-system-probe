@@ -2,8 +2,8 @@ import * as React from 'react';
 import { View as RNView } from 'react-native';
 import type { LayoutChangeEvent, ViewStyle } from 'react-native';
 import type { BoxNS, PaletteNS, StackNS } from '../contract';
-import { useFixedRegionLayout } from './FixedRegionLayout';
-import { useResolvedNode, withKeys, withSurface } from './shared';
+import { useFixedRegionLayout, useRegisterRegion } from './FixedRegionLayout';
+import { FIXED_REGION_STYLE_KEYS, numericPadding, useResolvedNode, withKeys, withSurface } from './shared';
 
 type FooterStyleProps =
   Pick<PaletteNS, 'chrome'> &
@@ -13,16 +13,20 @@ type FooterStyleProps =
 export type FooterProps = FooterStyleProps & {
   safeAreaBottom?: boolean;
   children?: React.ReactNode;
+  testID?: string;
+  onLayout?: (event: LayoutChangeEvent) => void;
+  ref?: React.Ref<React.ElementRef<typeof RNView>>;
 };
 
-function numericPadding(style: ViewStyle, key: 'paddingBottom' | 'paddingVertical'): number {
-  const value = style[key];
-  return typeof value === 'number' ? value : 0;
-}
-
-const FooterImpl: React.FC<FooterProps> = ({ safeAreaBottom = false, children, ...props }) => {
-  const { keyboardOffset, safeAreaBottom: hostSafeAreaBottom, setFooterHeight } = useFixedRegionLayout();
-  const measuredHeight = React.useRef(0);
+const FooterImpl = React.forwardRef<React.ElementRef<typeof RNView>, FooterProps>(({
+  safeAreaBottom = false,
+  children,
+  testID,
+  onLayout,
+  ...props
+}, ref) => {
+  const { keyboardOffset, safeAreaBottom: hostSafeAreaBottom } = useFixedRegionLayout();
+  const handleLayout = useRegisterRegion('footer', onLayout);
   const { node } = useResolvedNode(props);
   const resolvedViewStyle = node.view as ViewStyle;
   const authoredPaddingBottom =
@@ -35,17 +39,10 @@ const FooterImpl: React.FC<FooterProps> = ({ safeAreaBottom = false, children, .
       ? { paddingBottom: authoredPaddingBottom + activeSafeAreaBottom }
       : null;
 
-  React.useEffect(() => () => setFooterHeight(0), [setFooterHeight]);
-
-  const handleLayout = React.useCallback((event: LayoutChangeEvent) => {
-    const next = Math.round(event.nativeEvent.layout.height);
-    if (measuredHeight.current === next) return;
-    measuredHeight.current = next;
-    setFooterHeight(next);
-  }, [setFooterHeight]);
-
   return (
     <RNView
+      ref={ref}
+      testID={testID}
       onLayout={handleLayout}
       style={[
         FOOTER_STYLE,
@@ -57,20 +54,12 @@ const FooterImpl: React.FC<FooterProps> = ({ safeAreaBottom = false, children, .
       {withSurface(node.fg, children)}
     </RNView>
   );
-};
+});
 FooterImpl.displayName = 'Footer';
 
 export const Footer = withKeys(FooterImpl, [
   'safeAreaBottom',
-  'chrome',
-  'direction',
-  'align',
-  'justify',
-  'gap',
-  'paddingX',
-  'paddingY',
-  'paddingTop',
-  'paddingBottom',
+  ...FIXED_REGION_STYLE_KEYS,
 ]);
 
 const FOOTER_STYLE: ViewStyle = {

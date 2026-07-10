@@ -15,7 +15,7 @@ cp tools/ds-pull.mjs  <nuri-expo>/tools/ds-pull.mjs
 **2 · Run it** (pin to a release tag — needs read access to nuri-design-system):
 
 ```bash
-node tools/ds-pull.mjs rn/v0.1.0-alpha.5
+node tools/ds-pull.mjs rn/v0.1.0-alpha.6
 ```
 
 This vendors the DS into `ds/nuri/` (self-contained TS source, zero new npm dependencies —
@@ -35,19 +35,39 @@ and per-component doc links.
 
 Barrel only — there is deliberately no `@ds/*`, so the vendored internals cannot be imported.
 
-**4 · Wire the DS providers around the screen, and import from `@ds`:**
+**4 · Wire the Nuri root around the screen, and import from `@ds`:**
 
 ```tsx
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NuriThemeProvider, OverlayProvider, View, Text, Button } from '@ds';
+import * as React from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NuriRoot } from '@ds';
+import type { Theme } from '@ds';
+import { Screens } from './src/screens';
 
-<SafeAreaProvider>
-  <NuriThemeProvider mode="light" accent="neutral">
-    <OverlayProvider>
-      {/* the screen subtree — DS tokens rule inside, legacy designSystem.ts outside */}
-    </OverlayProvider>
-  </NuriThemeProvider>
-</SafeAreaProvider>
+function Shell() {
+  const [mode, setMode] = React.useState<Theme>('light');
+  const toggleTheme = React.useCallback(
+    () => setMode((current) => (current === 'light' ? 'dark' : 'light')),
+    [],
+  );
+  const insets = useSafeAreaInsets(); // the ONE native safe-area read
+
+  return (
+    <NuriRoot mode={mode} accent="neutral" safeArea={insets}>
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <Screens onToggleTheme={toggleTheme} />
+    </NuriRoot>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <Shell />
+    </SafeAreaProvider>
+  );
+}
 ```
 
 Adopt per screen, not app-wide: wrap each screen/modal you convert; untouched screens keep the
@@ -57,9 +77,11 @@ back to `COLORS.*`.)
 Provider ownership:
 
 - `SafeAreaProvider` is the app/Expo provider from `react-native-safe-area-context`.
-- `NuriThemeProvider` scopes the DS theme payload.
-- `OverlayProvider` is required for DS overlays such as `BottomSheet`; place it inside the theme
-  provider and above the safe-area-padded screen content, as shown in `App.tsx`.
+- `Shell` owns the mode state, Expo `StatusBar`, and the ONE `useSafeAreaInsets()` read; safe-area
+  crosses the DS boundary as plain numbers, so `@nuri/rn` keeps zero native dependencies.
+- `NuriRoot` composes theme, overlay outlet, canvas paint, and the DS safe-area environment in
+  their load-bearing order. A `BottomSheet` can therefore mount next to its launcher and still
+  render full-window above the screen subtree.
 
 No extra package is required for this probe shape: `react-native-safe-area-context` is already in
 this app's dependency list and is part of the nuri-expo stack being mirrored.
@@ -73,6 +95,7 @@ npm run web                                     # render: screen + sheet (detent
 npm run ios                                     # native: animation feel, keyboard, safe area
 ```
 
-`App.tsx` is the probe shell — safe-area ownership, theme provider placement, overlay provider
-placement, and the copied playground-parity DS demo. Treat it as the reference for DS usage
-patterns.
+`App.tsx` is the probe shell — the native safe-area seam, mode state, Expo `StatusBar`, and
+`NuriRoot` around the copied playground-parity DS screens. `src/screens/Menu.tsx` is the consumer
+pattern for co-locating sheets with their launchers via the demo-local `src/hooks/useSheet.ts`.
+Treat both as the reference for DS usage patterns.
