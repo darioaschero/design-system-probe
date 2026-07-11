@@ -97,12 +97,28 @@ function isRenderableChild(child: React.ReactNode): boolean {
   return child != null && child !== false && !(typeof child === 'string' && child.trim() === '');
 }
 
+// React fragments are composition-transparent: markers inside them belong to
+// the same harvest scope as adjacent children. Recurse so nested/keyed fragments
+// reach the existing slot, fallback, and foreign-owner rules unchanged.
+function forEachNuriCompositionChild(
+  children: React.ReactNode,
+  visit: (child: React.ReactNode) => void,
+): void {
+  React.Children.forEach(children, (child) => {
+    if (React.isValidElement(child) && child.type === React.Fragment) {
+      forEachNuriCompositionChild((child.props as { children?: React.ReactNode }).children, visit);
+      return;
+    }
+    visit(child);
+  });
+}
+
 export function harvestNuriSlots<PId extends PartId = PartId>(
   children: React.ReactNode,
   fallbackPart: PId | undefined,
 ): Partial<Record<PId, React.ReactNode[]>> {
   const harvested: Partial<Record<PId, React.ReactNode[]>> = {};
-  React.Children.forEach(children, (child) => {
+  forEachNuriCompositionChild(children, (child) => {
     if (React.isValidElement(child) && typeof child.type !== 'string') {
       const slot = (child.type as Partial<NuriSlot<object, PId>>).__nuriSlot;
       if (slot) {
@@ -129,7 +145,7 @@ export function harvestNuriComposition<PId extends PartId = PartId>(
 ): { hasSlots: boolean; items: NuriCompositionEntry<PId>[] } {
   const items: NuriCompositionEntry<PId>[] = [];
   let hasSlots = false;
-  React.Children.forEach(children, (child) => {
+  forEachNuriCompositionChild(children, (child) => {
     if (React.isValidElement(child) && typeof child.type !== 'string') {
       const slotType = child.type as Partial<NuriSlot<object, PId>>;
       if (slotType.__nuriSlot) {
@@ -193,6 +209,7 @@ export type NuriDescriptorInstance<A extends Axes, PId extends PartId = PartId> 
   composition?: Partial<Record<PId, NuriCompositionEntry<PId>[]>>;
   components?: Record<string, React.ComponentType<Record<string, unknown>>>;
   behaviour: NuriBehaviour<PId>;
+  inputHandle?: React.Ref<{ focus(): void; blur(): void }>;
 };
 
 type RenderCtx<A extends Axes> = {
@@ -557,7 +574,7 @@ function renderPart<A extends Axes>(
           key={node.name}
           {...flowProps}
           style={[
-            flat.node.type ? typeStyle(flat.node.type.size, flat.node.type.emphasis) : null,
+            flat.node.type ? typeStyle(flat.node.type.size, flat.node.type.emphasis, flat.node.type.mono) : null,
             fg ? { color: fg } : null,
             { flexShrink: 1, textAlign: 'center' },
             flat.style,
@@ -611,7 +628,7 @@ function renderPart<A extends Axes>(
           derivedLabel={derivedLabel}
           placeholderTextColor={ctx.theme.text.muted}
           flowProps={flowProps}
-          typeStyleValue={flat.node.type ? typeStyle(flat.node.type.size, flat.node.type.emphasis) : null}
+          typeStyleValue={flat.node.type ? typeStyle(flat.node.type.size, flat.node.type.emphasis, flat.node.type.mono) : null}
           foregroundStyle={fg ? { color: fg } : null}
           disabledStyle={inputDisabled ? { opacity: ctx.theme.interaction.disabledOpacity } : null}
           flatStyle={flat.style as StyleProp<TextStyle>}
@@ -635,12 +652,17 @@ export function renderDescriptorInstance<A extends Axes, PId extends PartId = Pa
   composition = {},
   components = {},
   behaviour,
+  inputHandle,
 }: NuriDescriptorInstance<A, PId>): React.ReactElement {
   if (!recipe) throw new Error(`nuri-factory: renderDescriptorInstance('${displayName}') requires a baked recipe`);
   const anatomy = resolveAnatomy(descriptor);
   const theme = useNuriTheme();
   const ambient = React.useContext(NuriSurfaceContext);
   const inputRef = React.useRef<TextInput>(null);
+  React.useImperativeHandle(inputHandle, () => ({
+    focus: () => inputRef.current?.focus(),
+    blur: () => inputRef.current?.blur(),
+  }), []);
   const inputFocus = useFocusable(inputRef, {
     onFocus: behaviour.input?.props.onFocus,
     onBlur: behaviour.input?.props.onBlur,
